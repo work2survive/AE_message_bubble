@@ -1,15 +1,15 @@
 # AE Message Bubble Generator (v1.0)
 
-[![Live Browser Simulator](https://img.shields.io/badge/Live%20Demo-AE%20ScriptUI%20Simulator-2c8cff?style=for-the-badge&logo=javascript)](https://work2survive.github.io/AE_JS_builder/?jsx=message_bubble.jsx)
+[![Live Browser Simulator](https://img.shields.io/badge/Live%20Demo-AE%20ScriptUI%20Simulator-2c8cff?style=for-the-badge&logo=javascript)](https://work2survive.github.io/AE_JS_builder/?jsx=message_bubble.jsx&autobuild=true)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 [![Adobe After Effects](https://img.shields.io/badge/Adobe%20After%20Effects-CS6%20--%20CC%202026%2B-9999FF?style=for-the-badge&logo=adobeaftereffects)](https://www.adobe.com/products/aftereffects.html)
 [![Built with Antigravity](https://img.shields.io/badge/Built%20With-Antigravity-4285F4?style=for-the-badge&logo=google)](https://deepmind.google/)
 
-**Live Demo**: [https://work2survive.github.io/AE_JS_builder/?jsx=message_bubble.jsx](https://work2survive.github.io/AE_JS_builder/?jsx=message_bubble.jsx)
+**Live Demo**: [https://work2survive.github.io/AE_JS_builder/?jsx=message_bubble.jsx&autobuild=true](https://work2survive.github.io/AE_JS_builder/?jsx=message_bubble.jsx&autobuild=true)
 
 A powerful, expression-rigged Adobe After Effects ScriptUI panel for generating authentic, animated chat and text message bubbles imitating modern messaging platforms (**iOS Messages**, **Android RCS**, **WhatsApp**, **Instagram Direct**, **Facebook Messenger**, and **Custom** themes).
 
-> **Live Browser Simulator**: Test and preview this tool interactively in the [AE JS & ScriptUI Simulator](https://work2survive.github.io/AE_JS_builder/?jsx=message_bubble.jsx) directly in your browser without launching After Effects!
+> **Live Browser Simulator**: Test and preview this tool interactively in the [AE JS & ScriptUI Simulator](https://work2survive.github.io/AE_JS_builder/?jsx=message_bubble.jsx&autobuild=true) directly in your browser without launching After Effects!
 
 ---
 
@@ -89,7 +89,7 @@ A powerful, expression-rigged Adobe After Effects ScriptUI panel for generating 
 
 ### Option 2: Run Without Installing
 1. In After Effects, navigate to **File > Scripts > Run Script File...**
-2. Select `Message_Bubble_Generator.jsx` (or `message_bubble.jsx`).
+2. Select `Message_Bubble_Generator.jsx`.
 
 ---
 
@@ -98,7 +98,9 @@ A powerful, expression-rigged Adobe After Effects ScriptUI panel for generating 
 1. Open or select an active composition in After Effects.
 2. Open the **Message Bubble Generator** panel.
 3. Type or paste your message (up to 250 characters; emojis supported).
-4. Select your **Style Preset** (iOS, Android RCS, WhatsApp, Instagram, Messenger, or Custom).
+4. Select your **Style Preset** (iOS, Android RCS, WhatsApp, Instagram, Messenger, Telegram, Discord, or Custom).
+   - Use the **↻** button to hot-reload presets from `message bubble presets/presets.json`.
+   - Use the **📂** button to open the presets folder in File Explorer / Finder.
 5. Choose **Message Type** (`Sent` or `Received`) and **Color Theme** (`Light` or `Dark`).
 6. Navigate between tabs:
    - **Appearance Tab**:
@@ -117,7 +119,8 @@ A powerful, expression-rigged Adobe After Effects ScriptUI panel for generating 
 ```
 AE_message_bubble/
 ├── Message_Bubble_Generator.jsx   # Primary ScriptUI panel for After Effects
-├── message_bubble.jsx             # Alias for compatibility with web simulator
+├── message bubble presets/        # Platform presets directory (auto-created if missing)
+│   └── presets.json               # Configurable JSON presets (Android RCS, iOS, etc.)
 ├── README.md                      # Documentation & user guide
 ├── LICENSE                        # MIT License
 └── .gitignore                     # Git ignore rules
@@ -129,7 +132,7 @@ AE_message_bubble/
 
 - **[AE JS & ScriptUI Simulator](https://github.com/work2survive/AE_JS_builder)**: Agnostic browser-based emulator for developing and testing After Effects ScriptUI panels and 2D/3D shape layers.
 - **[AE Pie Slice Tool](https://github.com/work2survive/AE-Pie-Slice-Tool)**: Procedural circular sectors, arcs, and pie slices for After Effects.
-- **[AECustomRoundedRect](https://github.com/work2survive/AECustomRoundedRect)**: Independent 4-corner rounded rectangle generator for After Effects.
+- **[AE_Custom_Rounded_Rect](https://github.com/work2survive/AE_Custom_Rounded_Rect)**: Independent 4-corner rounded rectangle generator for After Effects.
 
 ---
 
