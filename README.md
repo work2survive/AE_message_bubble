@@ -4,6 +4,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 [![Adobe After Effects](https://img.shields.io/badge/Adobe%20After%20Effects-CS6%20--%20CC%202026%2B-9999FF?style=for-the-badge&logo=adobeaftereffects)](https://www.adobe.com/products/aftereffects.html)
 
+**Live Demo**: [https://work2survive.github.io/AE_JS_builder/?jsx=message_bubble.jsx](https://work2survive.github.io/AE_JS_builder/?jsx=message_bubble.jsx)
+
 A powerful, expression-rigged Adobe After Effects ScriptUI panel for generating authentic, animated chat and text message bubbles imitating modern messaging platforms (**iOS Messages**, **Android RCS**, **WhatsApp**, **Instagram Direct**, **Facebook Messenger**, and **Custom** themes).
 
 > **Live Browser Simulator**: Test and preview this tool interactively in the [AE JS & ScriptUI Simulator](https://work2survive.github.io/AE_JS_builder/?jsx=message_bubble.jsx) directly in your browser without launching After Effects!
