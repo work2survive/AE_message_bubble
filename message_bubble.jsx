@@ -44,6 +44,41 @@
 (function(thisObj) {
     "use strict";
 
+    // -------------------------------------------------------------------------
+    // ExtendScript ES3 Polyfills & String Helpers (Compatibility with CC 2014-2026)
+    // -------------------------------------------------------------------------
+    if (typeof String.prototype.trim !== "function") {
+        String.prototype.trim = function() {
+            return this.replace(/^\s+|\s+$/g, "");
+        };
+    }
+    if (typeof String.prototype.trimStart !== "function") {
+        String.prototype.trimStart = function() {
+            return this.replace(/^\s+/, "");
+        };
+    }
+    if (typeof String.prototype.trimEnd !== "function") {
+        String.prototype.trimEnd = function() {
+            return this.replace(/\s+$/, "");
+        };
+    }
+    if (typeof String.prototype.trimLeft !== "function") {
+        String.prototype.trimLeft = String.prototype.trimStart;
+    }
+    if (typeof String.prototype.trimRight !== "function") {
+        String.prototype.trimRight = String.prototype.trimEnd;
+    }
+
+    function trimStr(str) {
+        if (str === null || typeof str === "undefined") return "";
+        return String(str).replace(/^\s+|\s+$/g, "");
+    }
+
+    function trimLeftStr(str) {
+        if (str === null || typeof str === "undefined") return "";
+        return String(str).replace(/^\s+/, "");
+    }
+
     var SCRIPT_VERSION = "v1.0";
     var MAX_CHARS = 250;
 
@@ -797,8 +832,9 @@
     // Automatic Read & Delivery Timing Calculation & Expressions
     // -------------------------------------------------------------------------
     function calculateReadDuration(text) {
-        if (!text || !text.trim()) return 1.5;
-        var trimmed = text.trim();
+        if (!text) return 1.5;
+        var trimmed = trimStr(text);
+        if (!trimmed) return 1.5;
         var words = trimmed.split(/\s+/).length;
         var chars = trimmed.length;
 
@@ -2028,15 +2064,15 @@
                 continue;
             }
             var testLine = currentLine + word;
-            if (measureStr(testLine) > maxPixelWidth && currentLine.trim().length > 0) {
-                lines.push(currentLine.trim());
-                currentLine = word.trimStart();
+            if (measureStr(testLine) > maxPixelWidth && trimStr(currentLine).length > 0) {
+                lines.push(trimStr(currentLine));
+                currentLine = trimLeftStr(word);
             } else {
                 currentLine = testLine;
             }
         }
         if (currentLine.length > 0) {
-            lines.push(currentLine.trim());
+            lines.push(trimStr(currentLine));
         }
 
         return lines.length > 0 ? lines : [""];
@@ -2701,10 +2737,10 @@
     grpRepoLink.alignment = ["fill", "bottom"];
     grpRepoLink.alignChildren = ["center", "center"];
     grpRepoLink.margins = [0, 4, 0, 0];
-    var lblRepoLink = grpRepoLink.add("statictext", undefined, "GitHub: work2survive/AE_JS_builder");
-    lblRepoLink.helpTip = "https://github.com/work2survive/AE_JS_builder";
+    var lblRepoLink = grpRepoLink.add("statictext", undefined, "GitHub: work2survive/AE_message_bubble");
+    lblRepoLink.helpTip = "https://github.com/work2survive/AE_message_bubble";
     lblRepoLink.onClick = function() {
-        var url = "https://github.com/work2survive/AE_JS_builder";
+        var url = "https://github.com/work2survive/AE_message_bubble";
         if (typeof window !== "undefined" && window.open) {
             window.open(url, "_blank");
         } else if ($.os.indexOf("Windows") !== -1) {
