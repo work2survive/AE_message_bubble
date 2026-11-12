@@ -171,7 +171,7 @@
         JSON = JSONPolyfill;
     }
 
-    var SCRIPT_VERSION = "v1.3";
+    var SCRIPT_VERSION = "v1.4";
     var MAX_CHARS = 250;
 
     // -------------------------------------------------------------------------
@@ -1254,7 +1254,7 @@
     // iOS 18 Animated Text Effects - Dynamic Expressions Engine
     // -------------------------------------------------------------------------
     var POS_ANIM_EXPR = [
-        "// iOS 18 Animated Text Effect - Position Expression",
+        "// Animated Text Effect - Position Expression",
         "(function() {",
         "    function getVal(name, fallback) {",
         "        try {",
@@ -1278,44 +1278,40 @@
         "    if (effectType === 0) return value;",
         "",
         "    var animOn = getVal('Animate Entrance', 1);",
-        "    if (animOn > 0) {",
-        "        var growFrames = Math.max(0, getVal('Bubble Grow Duration (frames)', 5));",
-        "        var typeFrames = Math.max(0, getVal('Typewriter Duration (frames)', 5));",
-        "        var fps = 30;",
-        "        try { fps = thisComp.frameRate; } catch(eFps) {}",
-        "        var fd = 1.0 / fps;",
-        "        try { if (thisComp.frameDuration) fd = thisComp.frameDuration; } catch(eFd) {}",
-        "        if ((time / fd) < (growFrames + typeFrames)) return value;",
+        "    var growFrames = (animOn > 0) ? Math.max(0, getVal('Bubble Grow Duration (frames)', 5)) : 0;",
+        "    var typeFrames = (animOn > 0) ? Math.max(0, getVal('Typewriter Duration (frames)', 5)) : 0;",
+        "    var fps = 30;",
+        "    try { fps = thisComp.frameRate; } catch(eFps) {}",
+        "    var fd = 1.0 / fps;",
+        "    try { if (thisComp.frameDuration) fd = thisComp.frameDuration; } catch(eFd) {}",
+        "",
+        "    var startFrame = growFrames + typeFrames;",
+        "    var currentFrame = time / fd;",
+        "    if (currentFrame < startFrame) return value;",
+        "",
+        "    var elapsedFrames = currentFrame - startFrame;",
+        "    var decayFrames = Math.max(0, getVal('Animation Decay (frames)', 30));",
+        "    var decayFactor = 1.0;",
+        "    if (decayFrames > 0) {",
+        "        if (elapsedFrames >= decayFrames) return value;",
+        "        var p = elapsedFrames / decayFrames;",
+        "        decayFactor = (1.0 - p) * (1.0 - p);",
         "    }",
         "",
         "    var speed = Math.max(0.1, getVal('Animation Speed', 100) / 100);",
         "    var amp = Math.max(0, getVal('Animation Intensity', 100) / 100);",
-        "    var t = time * speed;",
+        "    var t = (elapsedFrames * fd) * speed;",
         "    var dx = 0;",
         "    var dy = 0;",
         "",
-        "    if (effectType === 3) {",
-        "        // 3: Shake (rapid horizontal wobble)",
-        "        var freq = 20 * speed;",
-        "        dx = Math.sin(time * freq * Math.PI * 2) * (8 * amp);",
-        "    } else if (effectType === 4) {",
-        "        // 4: Nod (rhythmic vertical bobbing)",
+        "    if (effectType === 1) {",
+        "        // 1: Nod (Vertical Bobbing)",
         "        var freq = 2.4 * speed;",
-        "        dy = Math.sin(time * freq * Math.PI * 2) * (10 * amp);",
-        "    } else if (effectType === 6) {",
-        "        // 6: Ripple (floating wave undulating motion)",
-        "        var freq = 3.2 * speed;",
-        "        dy = Math.sin(time * freq) * (7 * amp);",
-        "        dx = Math.cos(time * freq * 0.6) * (4 * amp);",
-        "    } else if (effectType === 8) {",
-        "        // 8: Jitter (erratic twitching)",
-        "        try {",
-        "            var w = wiggle(22 * speed, 5 * amp);",
-        "            return [w[0], w[1], (value.length > 2 ? value[2] : 0)];",
-        "        } catch(eW) {",
-        "            dx = (Math.sin(time * 43 * speed) + Math.cos(time * 67 * speed)) * (2.5 * amp);",
-        "            dy = (Math.cos(time * 53 * speed) + Math.sin(time * 71 * speed)) * (2.5 * amp);",
-        "        }",
+        "        dy = Math.sin(t * freq * Math.PI * 2) * (10 * amp * decayFactor);",
+        "    } else if (effectType === 2) {",
+        "        // 2: Shake (Horizontal Wobble)",
+        "        var freq = 20 * speed;",
+        "        dx = Math.sin(t * freq * Math.PI * 2) * (8 * amp * decayFactor);",
         "    }",
         "",
         "    return [value[0] + dx, value[1] + dy, (value.length > 2 ? value[2] : 0)];",
@@ -1323,84 +1319,14 @@
     ].join("\n");
 
     var SCALE_ANIM_EXPR = [
-        "// iOS 18 Animated Text Effect - Scale Expression",
+        "// Animated Text Effect - Scale Expression",
         "(function() {",
-        "    function getVal(name, fallback) {",
-        "        try {",
-        "            if (thisLayer && thisLayer.hasParent) {",
-        "                var p = thisLayer.parent.effect(name)(1);",
-        "                return (p && typeof p.value !== 'undefined') ? p.value : (p !== undefined ? p : fallback);",
-        "            }",
-        "        } catch(e) {}",
-        "        try {",
-        "            var p2 = thisComp.layer('Bubble_Master_Controller').effect(name)(1);",
-        "            return (p2 && typeof p2.value !== 'undefined') ? p2.value : (p2 !== undefined ? p2 : fallback);",
-        "        } catch(e2) {}",
-        "        try {",
-        "            var p3 = effect(name)(1);",
-        "            return (p3 && typeof p3.value !== 'undefined') ? p3.value : (p3 !== undefined ? p3 : fallback);",
-        "        } catch(e3) {}",
-        "        return fallback;",
-        "    }",
-        "",
-        "    var effectType = Math.round(getVal('Animation Effect Type', 0));",
-        "    if (effectType === 0) return value;",
-        "",
-        "    var animOn = getVal('Animate Entrance', 1);",
-        "    if (animOn > 0) {",
-        "        var growFrames = Math.max(0, getVal('Bubble Grow Duration (frames)', 5));",
-        "        var typeFrames = Math.max(0, getVal('Typewriter Duration (frames)', 5));",
-        "        var fps = 30;",
-        "        try { fps = thisComp.frameRate; } catch(eFps) {}",
-        "        var fd = 1.0 / fps;",
-        "        try { if (thisComp.frameDuration) fd = thisComp.frameDuration; } catch(eFd) {}",
-        "        if ((time / fd) < (growFrames + typeFrames)) return value;",
-        "    }",
-        "",
-        "    var speed = Math.max(0.1, getVal('Animation Speed', 100) / 100);",
-        "    var amp = Math.max(0, getVal('Animation Intensity', 100) / 100);",
-        "    var t = time * speed;",
-        "    var factor = 1.0;",
-        "",
-        "    if (effectType === 1) {",
-        "        // 1: Big (enlarge bounce pulse)",
-        "        var pulse = Math.abs(Math.sin(t * Math.PI * 1.8));",
-        "        factor = 1.0 + (0.32 * amp * pulse);",
-        "    } else if (effectType === 2) {",
-        "        // 2: Small (contracted breathing scale)",
-        "        var pulse = 0.5 + 0.5 * Math.sin(t * Math.PI * 1.5);",
-        "        factor = 1.0 - (0.22 * amp * (0.6 + 0.4 * pulse));",
-        "    } else if (effectType === 5) {",
-        "        // 5: Explode (burst expansion and decaying shockwave)",
-        "        var cycle = 1.6 / speed;",
-        "        var phase = (time % cycle) / cycle;",
-        "        var offset = 0;",
-        "        if (phase < 0.22) {",
-        "            offset = Math.sin((phase / 0.22) * Math.PI * 0.5) * (0.55 * amp);",
-        "        } else {",
-        "            var decay = Math.exp(-(phase - 0.22) * 8);",
-        "            offset = Math.cos((phase - 0.22) * Math.PI * 12) * (0.55 * amp) * decay;",
-        "        }",
-        "        factor = Math.max(0.2, 1.0 + offset);",
-        "    } else if (effectType === 6) {",
-        "        // 6: Ripple (breathing subtle scale deformation)",
-        "        factor = 1.0 + (0.06 * amp * Math.sin(t * 3.2));",
-        "    } else if (effectType === 7) {",
-        "        // 7: Bloom (radiant expanding pulse)",
-        "        var pulse = 0.5 + 0.5 * Math.sin(t * Math.PI * 2.0);",
-        "        factor = 1.0 + (0.20 * amp * pulse);",
-        "    } else if (effectType === 8) {",
-        "        // 8: Jitter (erratic scale fluctuation)",
-        "        var jScale = (Math.sin(time * 37 * speed) * 0.08) * amp;",
-        "        factor = 1.0 + jScale;",
-        "    }",
-        "",
-        "    return [value[0] * factor, value[1] * factor];",
+        "    return value;",
         "})();"
     ].join("\n");
 
     var ROT_ANIM_EXPR = [
-        "// iOS 18 Animated Text Effect - Rotation Expression",
+        "// Animated Text Effect - Rotation Expression",
         "(function() {",
         "    function getVal(name, fallback) {",
         "        try {",
@@ -1424,33 +1350,37 @@
         "    if (effectType === 0) return value;",
         "",
         "    var animOn = getVal('Animate Entrance', 1);",
-        "    if (animOn > 0) {",
-        "        var growFrames = Math.max(0, getVal('Bubble Grow Duration (frames)', 5));",
-        "        var typeFrames = Math.max(0, getVal('Typewriter Duration (frames)', 5));",
-        "        var fps = 30;",
-        "        try { fps = thisComp.frameRate; } catch(eFps) {}",
-        "        var fd = 1.0 / fps;",
-        "        try { if (thisComp.frameDuration) fd = thisComp.frameDuration; } catch(eFd) {}",
-        "        if ((time / fd) < (growFrames + typeFrames)) return value;",
+        "    var growFrames = (animOn > 0) ? Math.max(0, getVal('Bubble Grow Duration (frames)', 5)) : 0;",
+        "    var typeFrames = (animOn > 0) ? Math.max(0, getVal('Typewriter Duration (frames)', 5)) : 0;",
+        "    var fps = 30;",
+        "    try { fps = thisComp.frameRate; } catch(eFps) {}",
+        "    var fd = 1.0 / fps;",
+        "    try { if (thisComp.frameDuration) fd = thisComp.frameDuration; } catch(eFd) {}",
+        "",
+        "    var startFrame = growFrames + typeFrames;",
+        "    var currentFrame = time / fd;",
+        "    if (currentFrame < startFrame) return value;",
+        "",
+        "    var elapsedFrames = currentFrame - startFrame;",
+        "    var decayFrames = Math.max(0, getVal('Animation Decay (frames)', 30));",
+        "    var decayFactor = 1.0;",
+        "    if (decayFrames > 0) {",
+        "        if (elapsedFrames >= decayFrames) return value;",
+        "        var p = elapsedFrames / decayFrames;",
+        "        decayFactor = (1.0 - p) * (1.0 - p);",
         "    }",
         "",
         "    var speed = Math.max(0.1, getVal('Animation Speed', 100) / 100);",
         "    var amp = Math.max(0, getVal('Animation Intensity', 100) / 100);",
-        "    var t = time * speed;",
+        "    var t = (elapsedFrames * fd) * speed;",
         "    var rot = 0;",
         "",
-        "    if (effectType === 3) {",
-        "        // Shake",
-        "        rot = Math.sin(time * 20 * speed * Math.PI) * (1.8 * amp);",
-        "    } else if (effectType === 4) {",
+        "    if (effectType === 1) {",
         "        // Nod",
-        "        rot = Math.sin(time * 2.4 * speed * Math.PI * 2) * (3.5 * amp);",
-        "    } else if (effectType === 6) {",
-        "        // Ripple",
-        "        rot = Math.sin(t * 3.2) * (2.5 * amp);",
-        "    } else if (effectType === 8) {",
-        "        // Jitter",
-        "        rot = (Math.sin(time * 47 * speed) * 3.0) * amp;",
+        "        rot = Math.sin(t * 2.4 * speed * Math.PI * 2) * (3.5 * amp * decayFactor);",
+        "    } else if (effectType === 2) {",
+        "        // Shake",
+        "        rot = Math.sin(t * 20 * speed * Math.PI) * (1.8 * amp * decayFactor);",
         "    }",
         "",
         "    return value + rot;",
@@ -1458,7 +1388,7 @@
     ].join("\n");
 
     var OPACITY_ANIM_EXPR = [
-        "// iOS 18 Animated Text Effect - Opacity Expression",
+        "// Animated Text Effect - Opacity Expression",
         "(function() {",
         "    function getVal(name, fallback) {",
         "        try {",
@@ -1482,31 +1412,38 @@
         "    if (effectType === 0) return value;",
         "",
         "    var animOn = getVal('Animate Entrance', 1);",
-        "    if (animOn > 0) {",
-        "        var growFrames = Math.max(0, getVal('Bubble Grow Duration (frames)', 5));",
-        "        var typeFrames = Math.max(0, getVal('Typewriter Duration (frames)', 5));",
-        "        var fps = 30;",
-        "        try { fps = thisComp.frameRate; } catch(eFps) {}",
-        "        var fd = 1.0 / fps;",
-        "        try { if (thisComp.frameDuration) fd = thisComp.frameDuration; } catch(eFd) {}",
-        "        if ((time / fd) < (growFrames + typeFrames)) return value;",
+        "    var growFrames = (animOn > 0) ? Math.max(0, getVal('Bubble Grow Duration (frames)', 5)) : 0;",
+        "    var typeFrames = (animOn > 0) ? Math.max(0, getVal('Typewriter Duration (frames)', 5)) : 0;",
+        "    var fps = 30;",
+        "    try { fps = thisComp.frameRate; } catch(eFps) {}",
+        "    var fd = 1.0 / fps;",
+        "    try { if (thisComp.frameDuration) fd = thisComp.frameDuration; } catch(eFd) {}",
+        "",
+        "    var startFrame = growFrames + typeFrames;",
+        "    var currentFrame = time / fd;",
+        "    if (currentFrame < startFrame) return value;",
+        "",
+        "    var elapsedFrames = currentFrame - startFrame;",
+        "    var decayFrames = Math.max(0, getVal('Animation Decay (frames)', 30));",
+        "    var decayFactor = 1.0;",
+        "    if (decayFrames > 0) {",
+        "        if (elapsedFrames >= decayFrames) return value;",
+        "        var p = elapsedFrames / decayFrames;",
+        "        decayFactor = (1.0 - p) * (1.0 - p);",
         "    }",
         "",
         "    var speed = Math.max(0.1, getVal('Animation Speed', 100) / 100);",
         "    var amp = Math.max(0, getVal('Animation Intensity', 100) / 100);",
-        "    var t = time * speed;",
+        "    var t = (elapsedFrames * fd) * speed;",
         "",
-        "    if (effectType === 7) {",
-        "        // Bloom: radiant glowing pulse",
-        "        var pulse = 0.5 + 0.5 * Math.sin(t * Math.PI * 2.0);",
-        "        return Math.min(100, Math.max(30, value * (0.65 + 0.35 * pulse)));",
-        "    } else if (effectType === 5) {",
-        "        // Explode: initial flash at burst",
-        "        var cycle = 1.6 / speed;",
-        "        var phase = (time % cycle) / cycle;",
-        "        if (phase < 0.15) {",
-        "            return Math.min(100, value * (0.8 + 0.2 * (phase / 0.15)));",
-        "        }",
+        "    if (effectType === 3) {",
+        "        // 3: Blink (pulse opacity 50% to 100%)",
+        "        var freq = 3.0 * speed;",
+        "        var pulse = 0.5 + 0.5 * Math.cos(t * freq * Math.PI * 2);",
+        "        var minOp = Math.max(0, 100 - (50 * amp));",
+        "        var currentRange = (100 - minOp) * decayFactor;",
+        "        var op = 100 - (currentRange * (1.0 - pulse));",
+        "        return (value / 100.0) * op;",
         "    }",
         "",
         "    return value;",
@@ -2507,8 +2444,75 @@
     tabAnimation.spacing = 8;
     tabAnimation.margins = 8;
 
-    // --- Panel: Text Effects & Animation ---
-    var pnlAnim = tabAnimation.add("panel", undefined, "Text Effects & Animation (iOS 18)");
+    // --- Panel 1: Entrance ---
+    var pnlEntrance = tabAnimation.add("panel", undefined, "Entrance");
+    pnlEntrance.orientation = "column";
+    pnlEntrance.alignChildren = ["fill", "top"];
+    pnlEntrance.spacing = 6;
+    pnlEntrance.margins = [10, 8, 10, 8];
+
+    var chkEntrance = pnlEntrance.add("checkbox", undefined, "Entrance Animation (Grow + Typewriter)");
+    chkEntrance.value = true; // Default: Enabled
+    chkEntrance.helpTip = "Animate the bubble growing from tail corner, followed by a typewriter text reveal.";
+
+    // Bubble Grow Duration Row (0 to 30 frames)
+    var grpGrow = pnlEntrance.add("group");
+    grpGrow.orientation = "row";
+    grpGrow.alignChildren = ["left", "center"];
+    var lblGrow = grpGrow.add("statictext", undefined, "Bubble Grow (frames):");
+    lblGrow.preferredSize = [135, -1];
+    var sldGrow = grpGrow.add("slider", undefined, 5, 0, 30);
+    sldGrow.alignment = ["fill", "center"];
+    var txtGrow = grpGrow.add("edittext", undefined, "5");
+    txtGrow.characters = 3;
+    txtGrow.helpTip = "Duration of the bubble growth animation in frames (0 to 30).";
+
+    sldGrow.onChanging = function() {
+        txtGrow.text = String(Math.round(sldGrow.value));
+    };
+    sldGrow.onChange = function() {
+        txtGrow.text = String(Math.round(sldGrow.value));
+    };
+    txtGrow.onChange = function() {
+        var v = Math.max(0, Math.min(60, parseInt(txtGrow.text, 10) || 0));
+        sldGrow.value = v;
+        txtGrow.text = String(Math.round(v));
+    };
+
+    // Typewriter Duration Row (0 to 30 frames)
+    var grpType = pnlEntrance.add("group");
+    grpType.orientation = "row";
+    grpType.alignChildren = ["left", "center"];
+    var lblType = grpType.add("statictext", undefined, "Typewriter (frames):");
+    lblType.preferredSize = [135, -1];
+    var sldType = grpType.add("slider", undefined, 5, 0, 30);
+    sldType.alignment = ["fill", "center"];
+    var txtType = grpType.add("edittext", undefined, "5");
+    txtType.characters = 3;
+    txtType.helpTip = "Duration of the typewriter text reveal in frames (0 to 30).";
+
+    sldType.onChanging = function() {
+        txtType.text = String(Math.round(sldType.value));
+    };
+    sldType.onChange = function() {
+        txtType.text = String(Math.round(sldType.value));
+    };
+    txtType.onChange = function() {
+        var v = Math.max(0, Math.min(60, parseInt(txtType.text, 10) || 0));
+        sldType.value = v;
+        txtType.text = String(Math.round(v));
+    };
+
+    chkEntrance.onClick = function() {
+        var en = chkEntrance.value;
+        sldGrow.enabled = en;
+        txtGrow.enabled = en;
+        sldType.enabled = en;
+        txtType.enabled = en;
+    };
+
+    // --- Panel 2: iOS Text Animation ---
+    var pnlAnim = tabAnimation.add("panel", undefined, "iOS Text Animation");
     pnlAnim.orientation = "column";
     pnlAnim.alignChildren = ["fill", "top"];
     pnlAnim.spacing = 6;
@@ -2519,105 +2523,38 @@
     grpAnimDrop.orientation = "row";
     grpAnimDrop.alignChildren = ["left", "center"];
     var lblAnim = grpAnimDrop.add("statictext", undefined, "Animated Effect:");
-    lblAnim.preferredSize = [115, -1];
+    lblAnim.preferredSize = [135, -1];
 
     var animOptions = [
         "None (Static)",
-        "Big (Enlarge Pulse)",
-        "Small (Contract Scale)",
-        "Shake (Horizontal Wobble)",
         "Nod (Vertical Bobbing)",
-        "Explode (Burst & Decay)",
-        "Ripple (Wave Float)",
-        "Bloom (Radiant Glow)",
-        "Jitter (Chaotic Glitch)"
+        "Shake (Horizontal Wobble)",
+        "Blink (Pulse Opacity 50%-100%)"
     ];
     var dropAnim = grpAnimDrop.add("dropdownlist", undefined, animOptions);
     dropAnim.selection = 0; // Default: None
     dropAnim.preferredSize = [185, 26];
-    dropAnim.helpTip = "Select iOS 18 animated text effect.";
+    dropAnim.helpTip = "Select animated text effect (Nod, Shake, or Blink).";
 
-    // 8 iOS 18 Effect Preset Buttons (2 rows of 4 buttons)
-    var grpBtnRow1 = pnlAnim.add("group");
-    grpBtnRow1.orientation = "row";
-    grpBtnRow1.spacing = 4;
-    grpBtnRow1.alignChildren = ["fill", "center"];
+    // Decay Row (in frames, slider)
+    var grpDecay = pnlAnim.add("group");
+    grpDecay.orientation = "row";
+    grpDecay.alignChildren = ["left", "center"];
+    var lblDecay = grpDecay.add("statictext", undefined, "Decay (frames):");
+    lblDecay.preferredSize = [135, -1];
+    var sldDecay = grpDecay.add("slider", undefined, 30, 0, 120);
+    sldDecay.alignment = ["fill", "center"];
+    var txtDecay = grpDecay.add("edittext", undefined, "30");
+    txtDecay.characters = 4;
+    txtDecay.helpTip = "Duration over which the animation effect dampens/decays to stop in frames (0 = continuous loop).";
 
-    var btnBig     = grpBtnRow1.add("button", undefined, "Big");
-    var btnSmall   = grpBtnRow1.add("button", undefined, "Small");
-    var btnShake   = grpBtnRow1.add("button", undefined, "Shake");
-    var btnNod     = grpBtnRow1.add("button", undefined, "Nod");
-    btnBig.preferredSize   = [68, 24];
-    btnSmall.preferredSize = [68, 24];
-    btnShake.preferredSize = [68, 24];
-    btnNod.preferredSize   = [68, 24];
-
-    var grpBtnRow2 = pnlAnim.add("group");
-    grpBtnRow2.orientation = "row";
-    grpBtnRow2.spacing = 4;
-    grpBtnRow2.alignChildren = ["fill", "center"];
-
-    var btnExplode = grpBtnRow2.add("button", undefined, "Explode");
-    var btnRipple  = grpBtnRow2.add("button", undefined, "Ripple");
-    var btnBloom   = grpBtnRow2.add("button", undefined, "Bloom");
-    var btnJitter  = grpBtnRow2.add("button", undefined, "Jitter");
-    btnExplode.preferredSize = [68, 24];
-    btnRipple.preferredSize  = [68, 24];
-    btnBloom.preferredSize   = [68, 24];
-    btnJitter.preferredSize  = [68, 24];
-
-    var effectButtons = [
-        { btn: btnBig,     index: 1 },
-        { btn: btnSmall,   index: 2 },
-        { btn: btnShake,   index: 3 },
-        { btn: btnNod,     index: 4 },
-        { btn: btnExplode, index: 5 },
-        { btn: btnRipple,  index: 6 },
-        { btn: btnBloom,   index: 7 },
-        { btn: btnJitter,  index: 8 }
-    ];
-
-    function updateButtonHighlights(currentIdx) {
-        for (var b = 0; b < effectButtons.length; b++) {
-            var item = effectButtons[b];
-            var isSelected = (item.index === currentIdx);
-            if (item.btn.domElement) {
-                if (isSelected) {
-                    item.btn.domElement.style.backgroundColor = "#007aff";
-                    item.btn.domElement.style.color = "#ffffff";
-                    item.btn.domElement.style.borderColor = "#005bb5";
-                    item.btn.domElement.style.fontWeight = "bold";
-                } else {
-                    item.btn.domElement.style.backgroundColor = "";
-                    item.btn.domElement.style.color = "";
-                    item.btn.domElement.style.borderColor = "";
-                    item.btn.domElement.style.fontWeight = "normal";
-                }
-            }
-        }
-    }
-
-    function selectEffect(idx) {
-        dropAnim.selection = idx;
-        updateButtonHighlights(idx);
-    }
-
-    for (var b = 0; b < effectButtons.length; b++) {
-        (function(item) {
-            item.btn.onClick = function() {
-                var cur = dropAnim.selection ? dropAnim.selection.index : 0;
-                if (cur === item.index) {
-                    selectEffect(0); // Toggle off to None
-                } else {
-                    selectEffect(item.index);
-                }
-            };
-        })(effectButtons[b]);
-    }
-
-    dropAnim.onChange = function() {
-        var cur = dropAnim.selection ? dropAnim.selection.index : 0;
-        updateButtonHighlights(cur);
+    sldDecay.onChanging = function() {
+        txtDecay.text = String(Math.round(sldDecay.value));
+    };
+    sldDecay.onChange = function() {
+        var v = Math.max(0, Math.min(300, parseInt(txtDecay.text, 10) || 0));
+        sldDecay.value = v;
+        txtDecay.text = String(Math.round(v));
     };
 
     // Animation Speed Row (50% to 200%)
@@ -2625,7 +2562,7 @@
     grpSpeed.orientation = "row";
     grpSpeed.alignChildren = ["left", "center"];
     var lblSpeed = grpSpeed.add("statictext", undefined, "Anim Speed (%):");
-    lblSpeed.preferredSize = [115, -1];
+    lblSpeed.preferredSize = [135, -1];
     var sldSpeed = grpSpeed.add("slider", undefined, 100, 50, 200);
     sldSpeed.alignment = ["fill", "center"];
     var txtSpeed = grpSpeed.add("edittext", undefined, "100");
@@ -2646,7 +2583,7 @@
     grpAmp.orientation = "row";
     grpAmp.alignChildren = ["left", "center"];
     var lblAmp = grpAmp.add("statictext", undefined, "Intensity (%):");
-    lblAmp.preferredSize = [115, -1];
+    lblAmp.preferredSize = [135, -1];
     var sldAmp = grpAmp.add("slider", undefined, 100, 20, 200);
     sldAmp.alignment = ["fill", "center"];
     var txtAmp = grpAmp.add("edittext", undefined, "100");
@@ -2660,70 +2597,6 @@
         var v = Math.max(10, Math.min(300, parseFloat(txtAmp.text) || 100));
         sldAmp.value = v;
         txtAmp.text = String(Math.round(v));
-    };
-
-    // Entrance Animation Controls
-    var grpEntrance = pnlAnim.add("group");
-    grpEntrance.orientation = "row";
-    grpEntrance.alignChildren = ["left", "center"];
-    var chkEntrance = grpEntrance.add("checkbox", undefined, "Entrance Animation (Grow + Typewriter)");
-    chkEntrance.value = true; // Default: Enabled
-    chkEntrance.helpTip = "Animate the bubble growing from left/right, followed by a typewriter text reveal.";
-
-    // Bubble Grow Duration Row (0 to 20 frames)
-    var grpGrow = pnlAnim.add("group");
-    grpGrow.orientation = "row";
-    grpGrow.alignChildren = ["left", "center"];
-    var lblGrow = grpGrow.add("statictext", undefined, "Bubble Grow (frames):");
-    lblGrow.preferredSize = [125, -1];
-    var sldGrow = grpGrow.add("slider", undefined, 5, 0, 20);
-    sldGrow.alignment = ["fill", "center"];
-    var txtGrow = grpGrow.add("edittext", undefined, "5");
-    txtGrow.characters = 3;
-    txtGrow.helpTip = "Duration of the bubble growth animation in frames (0 to 20).";
-
-    sldGrow.onChanging = function() {
-        txtGrow.text = String(Math.round(sldGrow.value));
-    };
-    sldGrow.onChange = function() {
-        txtGrow.text = String(Math.round(sldGrow.value));
-    };
-    txtGrow.onChange = function() {
-        var v = Math.max(0, Math.min(20, parseInt(txtGrow.text, 10) || 0));
-        sldGrow.value = v;
-        txtGrow.text = String(Math.round(v));
-    };
-
-    // Typewriter Duration Row (0 to 20 frames)
-    var grpType = pnlAnim.add("group");
-    grpType.orientation = "row";
-    grpType.alignChildren = ["left", "center"];
-    var lblType = grpType.add("statictext", undefined, "Typewriter (frames):");
-    lblType.preferredSize = [125, -1];
-    var sldType = grpType.add("slider", undefined, 5, 0, 20);
-    sldType.alignment = ["fill", "center"];
-    var txtType = grpType.add("edittext", undefined, "5");
-    txtType.characters = 3;
-    txtType.helpTip = "Duration of the typewriter text reveal in frames (0 to 20).";
-
-    sldType.onChanging = function() {
-        txtType.text = String(Math.round(sldType.value));
-    };
-    sldType.onChange = function() {
-        txtType.text = String(Math.round(sldType.value));
-    };
-    txtType.onChange = function() {
-        var v = Math.max(0, Math.min(20, parseInt(txtType.text, 10) || 0));
-        sldType.value = v;
-        txtType.text = String(Math.round(v));
-    };
-
-    chkEntrance.onClick = function() {
-        var en = chkEntrance.value;
-        sldGrow.enabled = en;
-        txtGrow.enabled = en;
-        sldType.enabled = en;
-        txtType.enabled = en;
     };
 
     // Shared cross-platform URL opener helper
@@ -3519,10 +3392,11 @@
             var wrapMode = wrapModes[selWrapIdx] || "pretty";
 
             var selAnimIdx = dropAnim.selection ? dropAnim.selection.index : 0;
+            var animDecay = (typeof sldDecay !== "undefined" && sldDecay) ? Math.max(0, Math.round(sldDecay.value)) : 30;
             var animSpeed = parseFloat(txtSpeed.text) || 100;
             var animAmp = parseFloat(txtAmp.text) || 100;
-            var growFVal = (typeof sldGrow !== "undefined" && sldGrow) ? Math.max(0, Math.min(20, Math.round(sldGrow.value))) : 5;
-            var typeFVal = (typeof sldType !== "undefined" && sldType) ? Math.max(0, Math.min(20, Math.round(sldType.value))) : 5;
+            var growFVal = (typeof sldGrow !== "undefined" && sldGrow) ? Math.max(0, Math.min(60, Math.round(sldGrow.value))) : 5;
+            var typeFVal = (typeof sldType !== "undefined" && sldType) ? Math.max(0, Math.min(60, Math.round(sldType.value))) : 5;
 
             var fontIdx = dropFont.selection ? dropFont.selection.index : 0;
             var selectedFont = FONTS[fontIdx] || FONTS[0];
@@ -3538,7 +3412,7 @@
             var wrappedString = lines.join("\n");
             var measuredTextW = getLinesPixelBounds(lines, textSize);
 
-            var scalePadFactor = (selAnimIdx === 1) ? 1.24 : ((selAnimIdx === 5) ? 1.30 : 1.0);
+            var scalePadFactor = 1.0;
             var lineH = Math.max(Math.round(textSize * 1.15), Math.round(textSize * 1.35 * leadingFactor));
             var textBlockH = Math.round(((lines.length - 1) * lineH + Math.round(textSize * 0.95)) * scalePadFactor);
             if (lines.length <= 1) textBlockH = Math.round(textSize * 1.05 * scalePadFactor);
@@ -3702,6 +3576,9 @@
 
                 var effAnim = parade.addProperty("ADBE Slider Control");
                 if (effAnim) { effAnim.name = "Animation Effect Type"; effAnim.property(1).setValue(selAnimIdx); }
+
+                var effDecay = parade.addProperty("ADBE Slider Control");
+                if (effDecay) { effDecay.name = "Animation Decay (frames)"; effDecay.property(1).setValue(animDecay); }
 
                 var effSpeed = parade.addProperty("ADBE Slider Control");
                 if (effSpeed) { effSpeed.name = "Animation Speed"; effSpeed.property(1).setValue(animSpeed); }
@@ -4170,6 +4047,7 @@
                 addParentEffect("ADBE Slider Control", "Bubble Grow Duration (frames)", growFVal);
                 addParentEffect("ADBE Slider Control", "Typewriter Duration (frames)", typeFVal);
                 addParentEffect("ADBE Slider Control", "Animation Effect Type", selAnimIdx);
+                addParentEffect("ADBE Slider Control", "Animation Decay (frames)", animDecay);
                 addParentEffect("ADBE Slider Control", "Animation Speed", animSpeed);
                 addParentEffect("ADBE Slider Control", "Animation Intensity", animAmp);
                 addParentEffect("ADBE Slider Control", "Delivered Time (s)", deliveredTime);
@@ -4228,6 +4106,7 @@
                 linkPreMaster("Bubble Grow Duration (frames)", false);
                 linkPreMaster("Typewriter Duration (frames)", false);
                 linkPreMaster("Animation Effect Type", false);
+                linkPreMaster("Animation Decay (frames)", false);
                 linkPreMaster("Animation Speed", false);
                 linkPreMaster("Animation Intensity", false);
                 linkPreMaster("Delivered Time (s)", false);
@@ -4453,6 +4332,15 @@
             } catch(eA2) {}
 
             try {
+                var eDecay = effSource.effect("Animation Decay (frames)");
+                if (eDecay && eDecay.property(1) && typeof sldDecay !== "undefined" && sldDecay) {
+                    var dVal = Math.round(eDecay.property(1).value);
+                    sldDecay.value = dVal;
+                    if (txtDecay) txtDecay.text = String(dVal);
+                }
+            } catch(eD2) {}
+
+            try {
                 var eSpeed = effSource.effect("Animation Speed");
                 if (eSpeed && eSpeed.property(1)) txtSpeed.text = String(Math.round(eSpeed.property(1).value));
             } catch(eSp2) {}
@@ -4559,10 +4447,11 @@
             var wrapMode = wrapModes[selWrapIdx] || "pretty";
 
             var selAnimIdx = dropAnim.selection ? dropAnim.selection.index : 0;
+            var animDecay = (typeof sldDecay !== "undefined" && sldDecay) ? Math.max(0, Math.round(sldDecay.value)) : 30;
             var animSpeed = parseFloat(txtSpeed.text) || 100;
             var animAmp = parseFloat(txtAmp.text) || 100;
-            var growFVal = (typeof sldGrow !== "undefined" && sldGrow) ? Math.max(0, Math.min(20, Math.round(sldGrow.value))) : 5;
-            var typeFVal = (typeof sldType !== "undefined" && sldType) ? Math.max(0, Math.min(20, Math.round(sldType.value))) : 5;
+            var growFVal = (typeof sldGrow !== "undefined" && sldGrow) ? Math.max(0, Math.min(60, Math.round(sldGrow.value))) : 5;
+            var typeFVal = (typeof sldType !== "undefined" && sldType) ? Math.max(0, Math.min(60, Math.round(sldType.value))) : 5;
 
             var fontIdx = dropFont.selection ? dropFont.selection.index : 0;
             var selectedFont = FONTS[fontIdx] || FONTS[0];
@@ -4577,7 +4466,7 @@
             var wrappedString = lines.join("\n");
             var measuredTextW = getLinesPixelBounds(lines, textSize);
 
-            var scalePadFactor = (selAnimIdx === 1) ? 1.24 : ((selAnimIdx === 5) ? 1.30 : 1.0);
+            var scalePadFactor = 1.0;
             var lineH = Math.max(Math.round(textSize * 1.15), Math.round(textSize * 1.35 * leadingFactor));
             var textBlockH = Math.round(((lines.length - 1) * lineH + Math.round(textSize * 0.95)) * scalePadFactor);
             if (lines.length <= 1) textBlockH = Math.round(textSize * 1.05 * scalePadFactor);
@@ -4684,6 +4573,7 @@
                 setLayerEffVal(targetLayer, "Bubble Grow Duration (frames)", growFVal);
                 setLayerEffVal(targetLayer, "Typewriter Duration (frames)", typeFVal);
                 setLayerEffVal(targetLayer, "Animation Effect Type", selAnimIdx);
+                setLayerEffVal(targetLayer, "Animation Decay (frames)", animDecay);
                 setLayerEffVal(targetLayer, "Animation Speed", animSpeed);
                 setLayerEffVal(targetLayer, "Animation Intensity", animAmp);
                 setLayerEffVal(targetLayer, "Delivered Time (s)", deliveredTime);
